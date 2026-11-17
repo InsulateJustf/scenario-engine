@@ -1,0 +1,40 @@
+#!/bin/sh /etc/rc.common
+# scenario — the luya-z scenario engine ported to OpenWrt (see /usr/share/scenario/).
+# Two procd instances:
+#   engine: /usr/bin/scenario-engine — scan -> decide -> switch Wi-Fi AP off/on (respawned by procd)
+#   guard:  /usr/share/scenario/wifiguard.sh — forces Wi-Fi on if the engine dies with the AP down
+# Escape hatch: touch /etc/scenario/disabled — the engine restores away (Wi-Fi on) and stands down.
+
+USE_PROCD=1
+START=99
+STOP=10
+
+start_service() {
+	mkdir -p /etc/scenario
+	if [ ! -f /etc/scenario/scenarios.json ]; then
+		cp /usr/share/scenario/scenarios.json.default /etc/scenario/scenarios.json
+	fi
+
+	procd_open_instance engine
+	procd_set_param command /usr/bin/scenario-engine
+	procd_set_param respawn 3600 5 0
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_close_instance
+
+	procd_open_instance guard
+	procd_set_param command /usr/share/scenario/wifiguard.sh
+	procd_set_param respawn 3600 5 0
+	procd_close_instance
+}
+
+service_stopped() {
+	# rc.common invokes this after procd has stopped the engine.
+	/usr/bin/scenario-engine --release-scan
+}
+
+reload_service() {
+	# the engine re-reads /etc/scenario/scenarios.json on every tick by mtime+size
+	stop
+	start
+}

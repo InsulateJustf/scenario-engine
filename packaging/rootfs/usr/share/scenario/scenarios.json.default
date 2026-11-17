@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "home_mcc": "460",
+  "params": {
+    "scan_interval_home_secs": 60,
+    "scan_interval_away_battery_secs": 300,
+    "scan_interval_away_charging_secs": 60,
+    "enter_hits": 2,
+    "exit_misses": 2,
+    "min_rssi_dbm": -70.0,
+    "leave_rssi_dbm": -72.0,
+    "blip_strong_dbm": -60.0,
+    "blip_hold_secs": 120
+  },
+  "scenarios": [
+    {
+      "id": "home",
+      "name": "在家",
+      "detect": {
+        "type": "ssid",
+        "entries": []
+      },
+      "actions": [
+        {
+          "method": "PUT",
+          "path": "/api/wifi/radio",
+          "body": {
+            "ap_2g": false,
+            "ap_5g": false
+          },
+          "snapshot": [
+            "wireless.ap0.disabled"
+          ]
+        }
+      ],
+      "inhibit_sleep": true
+    },
+    {
+      "id": "away",
+      "name": "外出",
+      "detect": {
+        "type": "fallback"
+      },
+      "actions": [
+        {
+          "method": "PUT",
+          "path": "/api/wifi/radio",
+          "body": {
+            "ap_2g": true,
+            "ap_5g": true
+          },
+          "snapshot": [
+            "wireless.ap0.disabled"
+          ]
+        }
+      ],
+      "inhibit_sleep": false
+    }
+  ]
+}

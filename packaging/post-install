@@ -1,0 +1,10 @@
+#!/bin/sh
+# apk passes new-version on install, new-version and old-version on upgrade.
+[ -x /etc/init.d/scenario ] || exit 0
+/etc/init.d/scenario enable
+if [ "$#" -ge 2 ]; then
+	/etc/init.d/scenario restart
+else
+	/etc/init.d/scenario start
+fi
+exit 0

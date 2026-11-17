@@ -1,0 +1,17 @@
+#!/bin/sh
+# Runs before removal, while init.d still exists: stop, disable, force Wi-Fi on.
+if [ -x /etc/init.d/scenario ]; then
+	/etc/init.d/scenario stop >/dev/null 2>&1
+	/etc/init.d/scenario disable >/dev/null 2>&1
+else
+	ubus call service delete '{"name":"scenario"}' >/dev/null 2>&1
+fi
+if [ -x /usr/bin/scenario-engine ]; then
+	/usr/bin/scenario-engine --release-scan >/dev/null 2>&1
+fi
+# A later fresh install must not inherit ownership of an AP we just forced on.
+rm -f /etc/scenario/state.json
+uci set wireless.ap0.disabled='0'
+uci commit wireless
+ubus call network reload >/dev/null 2>&1
+exit 0
